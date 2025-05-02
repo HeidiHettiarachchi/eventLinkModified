@@ -124,7 +124,7 @@ const ManageOrganizations = () => {
       president: "",
       staffAdvisor: "",
       eventIds: []
-    } as IOrganization);
+    } as unknown as IOrganization);
     setIsDialogOpen(true);
     setIsCreatingOrganization(true);
   };

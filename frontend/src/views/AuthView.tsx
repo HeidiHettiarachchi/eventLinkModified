@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Mail, Lock, User, X } from "lucide-react";
+import { Mail, Lock, User, X, UserCircle } from "lucide-react";
 import { userLogin, userSignup } from "../store/slices/userSlice";
 import { useAppDispatch, useAppSelector } from "../hooks/reduxHooks";
 import { AuthRedirect } from "../components";
@@ -11,70 +11,45 @@ const AuthView = () => {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState(""); // Added role state
   const [showError, setShowError] = useState(true);
   const navigate = useNavigate();
 
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.user);
-//uncomment this one
-  // const onClickSubmit = (
-  //   e: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  // ) => {
-  //   e.preventDefault();
-  //   if (isLogin) {
-  //     dispatch(userLogin({ email, password }));
-  //   } else {
-  //     dispatch(userSignup({ email, password, username }));
-  //   }
-  // };
 
   const onClickSubmit = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
     try {
-      const action = isLogin ? userLogin({ email, password }) : userSignup({ email, password, username });
+      // Include role in signup
+      const action = isLogin 
+        ? userLogin({ email, password }) 
+        : userSignup({ email, password, username, role });
+        
       const response = await dispatch(action).unwrap();
   
       if (response.token) {
         localStorage.setItem("token", response.token);
         if (response.role) {
-
-          // const decodedToken: IDecodedToken = jwtDecode(token);
-          // console.log("Decoded Token:", decodedToken);
           
-          if (response?.role === "staff admin") {
+          if (response?.role === "Admin") {
             navigate("/admin");
           } else if (response?.role === "organizer") {
             navigate("/organizer/eventsAdmin");
           } else if (response?.role === "staff advisor") {
-            navigate("/admin");
+            navigate("/staff/eventsAdmin");
           }
-         
-    
+          else if(response?.role === "seller"){
+            navigate("/seller");
+          }
         } else {
           navigate("/");
         }
-        // window.location.reload(); // Refresh to trigger AuthRedirect
-        
       }
     } catch (err) {
       console.error("Authentication failed:", err);
     }
   };
-
-
-
-  // const onClickSubmit = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-  //   e.preventDefault();
-  //   dispatch(userLogin({ email, password }))
-  //     .unwrap()
-  //     .then((response) => {
-  //       if (response.token) {
-  //         localStorage.setItem("token", response.token);
-  //         window.location.reload(); // Force re-render to trigger AuthRedirect
-  //       }
-  //     })
-  //     .catch((err) => console.error("Login failed:", err));
-  // };
 
   useEffect(() => {
     if (user.error) {
@@ -169,10 +144,42 @@ const AuthView = () => {
             </div>
           </div>
 
+          {/* Role dropdown - only shown during registration */}
+          {!isLogin && (
+            <div className="space-y-2">
+              <label
+                className="text-sm font-medium text-gray-700"
+                htmlFor="role"
+              >
+                User Role
+              </label>
+              <div className="relative">
+                <UserCircle className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <select
+                  id="role"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none bg-white"
+                  onChange={(e) => setRole(e.target.value)}
+                  value={role}
+                >
+                  <option value="" disabled>Select your role</option>
+                  <option value="organizer">Organizer</option>
+                  <option value="staff advisor">Staff</option>
+                  <option value="seller">Seller</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                  <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
+
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors mt-6"
             onClick={onClickSubmit}
+            disabled={!isLogin && !role} // Disable signup button if no role is selected
           >
             {isLogin ? "Login" : "Sign Up"}
           </button>
@@ -192,6 +199,7 @@ const AuthView = () => {
                 // setEmail("");
                 // setPassword("");
                 // setUsername("");
+                // setRole("");
               }}
             >
               {isLogin ? "Sign up" : "Login"}

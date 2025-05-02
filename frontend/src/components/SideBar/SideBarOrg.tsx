@@ -1,36 +1,87 @@
-import React, { useState, useEffect } from 'react';
+
+
+import React, { useEffect, useState } from 'react';
 import './Sidebar.css';
 import logo from '/assets/logo.png';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import EventOrg from '../../views/EventOrg';
 import Profile from '../../views/Profile/Profile';
 import Committee from '../../views/Committee/Committee';
 import Resources from '../../views/Resources/Resources';
 import Calendar from '../../views/Calendar/Calendar';
-
-
+import { getUsersAPI } from '../../services/UserService';
+import { getUserDetailsAPI } from '../../services/AuthService';
 
 const SideBarOrg: React.FC = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const navigate = useNavigate();
-    const [isBouncing, setIsBouncing] = useState(true);
-
+    const location = useLocation(); // Get current location/route
+    const [isBouncing, setIsBouncing] = React.useState(true);
+    const [userDetails, setUserDetails] = useState<IUser | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const [username, setUserName] = React.useState<string>('');
+    const [email, setEmail] = React.useState<string>('');
+    const [role, setRole] = React.useState<string>('');
+    const [userId, setUserId] = React.useState<string>('');
 
     useEffect(() => {
-
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.classList.add('dark');
         }
     }, []);
 
     useEffect(() => {
-        const timer = setTimeout(() => setIsBouncing(false), 3500); // stop after 3s
+        const timer = setTimeout(() => setIsBouncing(false), 3500);
         return () => clearTimeout(timer);
     }, []);
 
     const handleLogout = () => {
-        // Perform logout logic here
         navigate('/');
+    };
+
+    useEffect(() => {
+        // Fetch user details when the component mounts
+        fetchUserDetails();
+    }, []);
+
+    const fetchUserDetails = async () => {
+        try {
+            // Get current user's details (including email)
+            const currentUser = await getUserDetailsAPI();
+
+            if (!currentUser.data.username) {
+                console.error("Failed to get current user details or email");
+                setLoading(false);
+                return;
+            }
+
+            // Get all users
+            const allUsers = await getUsersAPI();
+
+            // Find the user with matching email
+            const matchedUser = allUsers.find(
+                (user) => user.email === currentUser.data.email
+            );
+
+            if (matchedUser) {
+                // Set the full user details including ID and any other properties
+                setUserDetails(matchedUser);
+                setUserName(matchedUser.username);
+                console.log("User details matched and set:", matchedUser);
+            } else {
+                console.error(
+                    "No matching user found with email:",
+                    currentUser.data.email
+                );
+                // Set error state and stop loading
+                setError("User not found in the system");
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error("Failed to fetch user details", error);
+            setError("Failed to load user information");
+            setLoading(false);
+        }
     };
 
     const navItems = [
@@ -71,38 +122,56 @@ const SideBarOrg: React.FC = () => {
         },
     ];
 
+    // Function to check if the current route matches the nav item
+    const isActiveRoute = (href: string) => {
+        return location.pathname === href;
+    };
+
     return (
         <div className="relative bg-gradient-to-r min-h-screen flex font-poppins">
-            {/* Sidebar */}
-            <aside
-                className={`fixed top-0 left-0 z-50 bg-[#069efd] w-64 h-full flex flex-col transition-transform duration-300 ease-in-out transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                    }`}
-            >
-                <div className="p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+            {/* Background Animation */}
+            <div className="areaSideBar">
+                <ul className="circlesSideBar">
+                    {Array.from({ length: 10 }).map((_, i) => (
+                        <li key={i} className="listSidebar"></li>
+                    ))}
+                </ul>
+            </div>
+
+            <aside className="fixed top-0 left-0 z-50 bg-[#069efd] w-64 h-full flex flex-col">
+                <div className="p-4 flex items-center justify-start border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center space-x-3">
                         <img src={logo} alt="Logo" className="h-10 w-auto" />
                         <span className="text-white text-xl font-semibold">Dashboard</span>
                     </div>
-                    <button
-                        onClick={() => setIsSidebarOpen(false)}
-                        className="text-gray-500 hover:text-[#FC8239] dark:text-gray-300 dark:hover:text-white cursor-pointer"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
                 </div>
-
 
                 <nav className="flex-1 overflow-y-auto">
                     <ul className="p-4 space-y-2">
                         {navItems.map((item, idx) => (
-                            <li className="animate-fade-in" style={{ animationDelay: `${(idx + 1) * 0.1}s` }} key={item.label}>
+                            <li
+                                className="animate-fade-in"
+                                key={item.label}
+                                style={{
+                                    animationDelay: `${(idx + 1) * 0.1}s`,
+                                    animationFillMode: 'forwards',
+                                }}
+                            >
                                 <a
                                     href={item.href}
-                                    className="flex items-center p-2 text-gray-700 dark:text-white rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900 transition"
+                                    className={`flex items-center p-2 text-gray-700 dark:text-white rounded-lg transition
+                                        ${isActiveRoute(item.href) 
+                                            ? 'bg-[#f45a01] text-white font-semibold'
+                                            : 'hover:bg-[#f45a01]'
+                                        }`}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg 
+                                        xmlns="http://www.w3.org/2000/svg" 
+                                        className="h-6 w-6 mr-3" 
+                                        fill="none" 
+                                        viewBox="0 0 24 24" 
+                                        stroke="currentColor"
+                                    >
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.iconPath} />
                                     </svg>
                                     {item.label}
@@ -125,42 +194,15 @@ const SideBarOrg: React.FC = () => {
                 </div>
             </aside>
 
-            {/* Main content + Navbar */}
-            <div className="flex-1 min-h-screen bg-white">
-
-                {/* Top Navbar */}
+            {/* Main content */}
+            <div className="flex-1 min-h-screen bg-white ml-64">
                 <header>
-                    <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 py-4 bg-[#069efd] backdrop-blur-md shadow-md h-18.5">
-
-                        {/* Left Section: Hamburger & Logo */}
-                        <div className="flex items-center space-x-4 ">
-
-                            <button
-                                onClick={() => setIsSidebarOpen(true)}
-                                className="text-white hover:text-gray-300 focus:outline-none cursor-pointer"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
-                            </button>
-
-                            <span className="text-2xl font-semibold font-poppins text-white px-2  ">Event Link </span>
-
-
-                        </div>
-
-
-                        {/* Right Section: Dashboard title and logout */}
+                    <div className="fixed top-0 left-64 right-0 z-40 flex items-center justify-between px-6 py-4 bg-[#069efd] backdrop-blur-md shadow-md h-18.5">
+                        <span className="text-2xl font-semibold font-poppins text-white px-2">Event Link</span>
                         <div className="flex items-center space-x-6">
-                            {/* <span className="text-lg font-semibold font-poppins text-white">Hi, John <span>😊</span>
-                                !</span> */}
-
                             <span className={`text-lg font-semibold font-poppins text-white ${isBouncing ? 'animate-bounce' : ''}`}>
-                                Hi, User! <span>😊</span>
+                                Hi {username} <span>😊!</span>
                             </span>
-
-
-                            {/* Logout Button */}
                             <button
                                 onClick={handleLogout}
                                 className="flex items-center text-white space-x-1 hover:text-red-100 focus:outline-none cursor-pointer"
@@ -168,19 +210,10 @@ const SideBarOrg: React.FC = () => {
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                                 </svg>
-
                             </button>
-
-                            <main></main>
-
-
                         </div>
                     </div>
                 </header>
-
-
-
-
             </div>
         </div>
     );

@@ -6,6 +6,8 @@ import AboutUs from "../components/About/AboutUs";
 import "../App.css";
 import '@fontsource/poppins/700.css'; // Optional: bold weights
 import Footer from "../components/Footer/Footer";
+import { Section } from "lucide-react";
+import ExploreEvent from "./ExploreEvent/ExploreEvent";
 
 const HomeView: React.FC = () => {
 
@@ -55,13 +57,13 @@ const HomeView: React.FC = () => {
 
 
       <div className="relative z-10 flex h-screen flex-col items-center justify-center px-4 text-center ">
-        <h1 className="hover:animate-bounce font-poppins mb-6 flex  space-x-1 rounded px-4 py-2 text-7xl font-bold tracking-wide text-white" >Event Link</h1>
+        <h1 className="hover:animate-bounce font-poppins mb-6 flex  space-x-1 rounded px-4 py-2 text-7xl font-bold tracking-wide text-white hover:text-[#FC8239]" >Event  Link</h1>
 
 
 
 
 
-        <p className="font-poppins text-xl text-amber-300 mb-8 max-w-2xl">
+        <p className="font-poppins text-xl text-white mb-8 max-w-2xl ">
           Welcome fellows!
           Link with us to explore events and clubs happening around you.
           Organize your events and manage your clubs with ease.
@@ -80,9 +82,18 @@ const HomeView: React.FC = () => {
 
       </div>
 
-<section id="AboutUs">
-      <AboutUs />
+      <section id="AboutUs">
+        <AboutUs />
       </section>
+      <br />
+      <br />
+
+      <section id="eventExplore">
+        <ExploreEvent />
+      </section>
+<br />
+<br />
+
 
       <Footer />
 

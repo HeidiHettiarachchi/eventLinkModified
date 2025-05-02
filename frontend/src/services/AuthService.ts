@@ -16,10 +16,10 @@ const loginAPI = async ({ email, password }: ILoginRequest) => {
   return response;
 };
 
-const signupAPI = async ({ email, password, username }: ISignupRequest) => {
+const signupAPI = async ({ email, password, username,role}: ISignupRequest) => {
   const response = await API.post<ISignupResponse, IErrorResponse>(
     "/auth/register",
-    { email, password, username }
+    { email, password, username,role }
   );
   return response;
 };

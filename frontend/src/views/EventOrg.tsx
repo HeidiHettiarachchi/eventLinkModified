@@ -10,10 +10,12 @@ import { IEvent } from "../types/IResponse";
 import EditUserDialog from "../components/common/EditUserDialog";
 import CreateEventDialog from "../components/common/CreateEventDialog";
 import SideBarOrg from "../components/SideBar/SideBarOrg";
+import SideBarStaff from "../components/SideBar/SideBarStaff";
 import { IUser } from "../types";
 import { getUserDetailsAPI } from "../services";
 import { getUsersAPI } from "../services/UserService";
 import { getOrganizationsAPI } from "../services/OrganizationService";
+import DownloadReportButton from "../components/ReportGeneration/DownloadReportButton";
 import ViewEventModal from "../components/common/ViewEventModal";
 import {
   FiCalendar,
@@ -25,6 +27,7 @@ import {
   FiEye,
   FiTrash2,
   FiCheckSquare,
+  FiShoppingCart,
   FiXSquare,
 } from "react-icons/fi";
 import {
@@ -41,6 +44,7 @@ import Button from "../components/Button/IconButton";
 import { toast } from "react-toastify";
 import UpdateEventForm from "../components/common/UpdateEventForm";
 import EventStatusModal from "../components/common/EventStatusModal";
+import { useNavigate } from "react-router-dom";
 
 const ManageEvents = () => {
   const [events, setEvents] = useState<IEvent[]>([]);
@@ -68,6 +72,7 @@ const ManageEvents = () => {
   const [handleStatusEditEvent, setHandleStatusEditEvent] =
     useState<IEvent | null>(null);
   const [displayMode, setDisplayMode] = useState<"table" | "grid">("table");
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check screen size for initial display mode
@@ -556,6 +561,7 @@ const ManageEvents = () => {
     <div className="flex min-h-screen bg-gray-100">
       {/* Fixed sidebar - now properly styled */}
       <div className="w-64 fixed inset-y-0 left-0 z-10 shadow-lg bg-white">
+        if (role == )
         <SideBarOrg />
       </div>
 
@@ -650,66 +656,69 @@ const ManageEvents = () => {
             </div>
           )}
 
-          {/* Search and Filter Controls */}
-          <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-              <div className="relative flex-grow">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiSearch className="text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search by event name..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 p-3 border border-gray-300 rounded-md w-full"
-                />
-              </div>
+      {/* Search and Filter Controls */}
+<div className="bg-white p-4 rounded-lg shadow-md mb-6">
+  <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+    <div className="relative flex-grow">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <FiSearch className="text-gray-400" />
+      </div>
+      <input
+        type="text"
+        placeholder="Search by event name..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="pl-10 p-3 border border-gray-300 rounded-md w-full"
+      />
+    </div>
 
-              <div className="flex flex-wrap gap-2">
-                <div className="flex items-center">
-                  <FiFilter className="mr-2 text-gray-500" />
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="p-2 border border-gray-300 rounded-md bg-white"
-                  >
-                    <option value="all">All Statuses</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Rejected">Rejected</option>
-                  </select>
-                </div>
+    <div className="flex flex-wrap gap-2">
+      <div className="flex items-center">
+        <FiFilter className="mr-2 text-gray-500" />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="p-2 border border-gray-300 rounded-md bg-white"
+        >
+          <option value="all">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
 
-                {eventTypes.length > 0 && (
-                  <div className="flex items-center">
-                    <MdCategory className="mr-2 text-gray-500" />
-                    <select
-                      value={typeFilter}
-                      onChange={(e) => setTypeFilter(e.target.value)}
-                      className="p-2 border border-gray-300 rounded-md bg-white"
-                    >
-                      <option value="all">All Types</option>
-                      {eventTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+      {eventTypes.length > 0 && (
+        <div className="flex items-center">
+          <MdCategory className="mr-2 text-gray-500" />
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="p-2 border border-gray-300 rounded-md bg-white"
+          >
+            <option value="all">All Types</option>
+            {eventTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
-                {canCreateEvent && (
-                  <Button
-                    text="Create Event"
-                    icon={<MdAdd />}
-                    size="sm"
-                    onClick={() => setIsCreateDialogOpen(true)}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
+      {/* Add the Download Report Button */}
+      <DownloadReportButton filteredEvents={filteredEvents} />
+
+      {canCreateEvent && (
+        <Button
+          text="Create Event"
+          icon={<MdAdd />}
+          size="sm"
+          onClick={() => setIsCreateDialogOpen(true)}
+        />
+      )}
+    </div>
+  </div>
+</div>
 
           {loading ? (
             <div className="bg-white p-6 rounded-lg shadow-md text-center">
@@ -787,6 +796,14 @@ const ManageEvents = () => {
                                     icon={<FiEye />}
                                     size="xs"
                                     onClick={() => handleViewEvent(event)}
+                                  />
+                                  <Button
+                                    text="Order"
+                                    icon={<FiShoppingCart />}
+                                    size="xs"
+                                    onClick={() => {
+                                      navigate(`/Order/${event._id}`);
+                                    }}
                                   />
                                   {canManageEvents && (
                                     <>

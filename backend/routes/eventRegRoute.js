@@ -8,6 +8,7 @@ const {
     deleteEvent,
     getEventsByOrganization,
     getEventsById,
+    getApprovedEvents,
 } = require("../controllers/eventController");
 
 const eventRegRouter = express.Router();
@@ -20,6 +21,8 @@ eventRegRouter.put("/updateEvent/:id", authenticationUtil, updateEvent);
 eventRegRouter.delete("/deleteEvent/:id", authenticationUtil, deleteEvent);
 eventRegRouter.get("/getAllEvents", getEvents); // Get all events
 eventRegRouter.get("/getEventById/:id", getEventsById); // Get event by ID
+eventRegRouter.get('/events/approved', getApprovedEvents); // get approved events for calendar 
+
 // Add event
 eventRegRouter.post("/addEvent", authenticationUtil, createEvent);  
 

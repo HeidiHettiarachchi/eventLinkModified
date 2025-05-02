@@ -61,6 +61,7 @@ interface ICrew {
 }
 
 interface IEvent{
+  _id:string,
   eventID: string;
   eventName: string;
   eventDate: string;
@@ -73,8 +74,41 @@ interface IEvent{
   eventMode: "Physical" | "Online";
   eventType: "Hackathon" | "Academic" | "Non-Academic";
   eventStatus: "Pending" | "Approved" | "Rejected";
+  eventVenue: string;
+  eventBudget: number;
+  eventImage?: string;
 }
 
+
+export interface ICommitteeMember {
+  name: string;
+  role: string;
+  email: string;
+  phone: string;
+  image: string;
+}
+
+export interface ICommitteeLeader {
+  name: string;
+  email: string;
+  phone: string;
+  image: string;
+}
+
+export interface ICommittee {
+  _id?: string;
+  term: string;
+  year: number;
+  organizationId: string;
+  president: ICommitteeLeader;
+  vicePresident: ICommitteeLeader;
+  secretary: ICommitteeLeader;
+  assistantSecretary: ICommitteeLeader;
+  treasurer: ICommitteeLeader;
+  members: ICommitteeMember[];
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export type {
   ICrew,
@@ -86,4 +120,7 @@ export type {
   ISignupResponse,
   IUser,
   IEvent,
+  ICommittee,
+  ICommitteeMember,
+  ICommitteeLeader,
 };

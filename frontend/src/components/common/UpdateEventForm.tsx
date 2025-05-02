@@ -2,15 +2,35 @@ import { useState, useEffect } from "react";
 import { IEvent } from "../../types/IResponse";
 import Button from "../Button/Button";
 import { uploadFile } from "../../services/FileUploadService";
-import { 
-  FiCalendar, FiClock, FiUser, FiFileText, 
-  FiCheck, FiX, FiAlertCircle, FiEdit 
+import {
+  FiCalendar,
+  FiClock,
+  FiUser,
+  FiFileText,
+  FiCheck,
+  FiX,
+  FiAlertCircle,
+  FiEdit,
+  FiDollarSign,
+  FiImage,
 } from "react-icons/fi";
-import { 
-  MdOutlineEventNote, MdModeOfTravel, MdCategory, 
-  MdWarning, MdLocationOn
+import {
+  MdOutlineEventNote,
+  MdModeOfTravel,
+  MdCategory,
+  MdWarning,
+  MdLocationOn,
 } from "react-icons/md";
 import { BsInfoCircle } from "react-icons/bs";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
+import { app } from "../../firebase"; // Make sure you have your firebase config imported
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface UpdateEventFormProps {
   isOpen: boolean;
@@ -31,6 +51,7 @@ interface ValidationErrors {
   eventForm?: string;
   eventStatus?: string;
   eventVenue?: string; // Added eventVenue validation
+  eventBudget?: string;
 }
 
 const UpdateEventForm = ({
@@ -42,16 +63,76 @@ const UpdateEventForm = ({
 }: UpdateEventFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [eventData, setEventData] = useState<Partial<IEvent>>({});
-  const [originalEventData, setOriginalEventData] = useState<Partial<IEvent>>({});
-  
+  const [originalEventData, setOriginalEventData] = useState<Partial<IEvent>>(
+    {}
+  );
+
   // File states
   const [proposalFile, setProposalFile] = useState<File | null>(null);
   const [formFile, setFormFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
   const [hasChanges, setHasChanges] = useState(false);
   const [attemptedClose, setAttemptedClose] = useState(false);
+
+  //Image state
+  // Image states
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFileUploadingProgress, setImageFileUploadingProgress] = useState<
+    number | null
+  >(null);
+  const [imageFileUploadingError, setImageFileUploadingError] = useState<
+    string | null
+  >(null);
+  const [fileUploadSuccess, setFileUploadSuccess] = useState(false);
+  const [imageFileUrl, setImageFileUrl] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  
+  //IMAGE UPLOAD FUNCTION
+  const uploadEventImage = async () => {
+    if (!imageFile) return;
+
+    const storage = getStorage(app);
+    const filename = new Date().getTime() + imageFile.name;
+    const storageRef = ref(storage, filename);
+    const uploadTask = uploadBytesResumable(storageRef, imageFile);
+
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setImageFileUploadingProgress(progress.toFixed(0));
+      },
+      (error) => {
+        setImageFileUploadingError(
+          "Could not upload image (File must be less than 2MB)"
+        );
+        setImageFileUploadingProgress(null);
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          setImageFileUrl(downloadURL);
+          setFileUploadSuccess(true);
+          setImageFileUploadingProgress(100);
+          setEventData((prev) => ({ ...prev, eventImage: downloadURL }));
+        });
+      }
+    );
+  };
+
+  // Add an effect to trigger the upload when the file changes
+  useEffect(() => {
+    if (imageFile) {
+      setFileUploadSuccess(false);
+      setImageFileUploadingError(null);
+      uploadEventImage();
+    }
+  }, [imageFile]);
 
   // Initialize form data when event changes
   useEffect(() => {
@@ -60,28 +141,42 @@ const UpdateEventForm = ({
         ...event,
         oldOrganizationId: event.organizationId, // Store original org ID for backend
       });
-      setOriginalEventData({...event});
+      setOriginalEventData({ ...event });
       setHasChanges(false);
       setError("");
       setValidationErrors({});
       setProposalFile(null);
       setFormFile(null);
       setAttemptedClose(false);
+
+      // Reset image states
+      setImageFile(null);
+      setImageFileUploadingProgress(null);
+      setImageFileUploadingError(null);
+      setFileUploadSuccess(false);
+      setImageFileUrl(null);
+
+      // Set image preview if event has an image
+      if (event.eventImage) {
+        setImagePreview(event.eventImage);
+      } else {
+        setImagePreview(null);
+      }
     }
   }, [event, isOpen]);
-
   // Track changes between original and current data
   useEffect(() => {
     if (Object.keys(originalEventData).length === 0) return;
-    
-    const changesDetected = 
-      JSON.stringify(filterEventData(eventData)) !== 
-      JSON.stringify(filterEventData(originalEventData)) ||
+
+    const changesDetected =
+      JSON.stringify(filterEventData(eventData)) !==
+        JSON.stringify(filterEventData(originalEventData)) ||
       proposalFile !== null ||
-      formFile !== null;
-    
+      formFile !== null ||
+      imageFile !== null;
+
     setHasChanges(changesDetected);
-  }, [eventData, originalEventData, proposalFile, formFile]);
+  }, [eventData, originalEventData, proposalFile, formFile, imageFile]);
 
   // Helper to filter out non-comparable fields
   const filterEventData = (data: Partial<IEvent>) => {
@@ -94,11 +189,11 @@ const UpdateEventForm = ({
   // Validate form fields
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
-    
+
     if (!eventData.eventName?.trim()) {
       errors.eventName = "Event name is required";
     }
-    
+
     if (!eventData.eventDate) {
       errors.eventDate = "Event date is required";
     } else {
@@ -107,32 +202,38 @@ const UpdateEventForm = ({
       selectedDate.setHours(0, 0, 0, 0);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       if (selectedDate < today) {
         errors.eventDate = "Event date cannot be in the past";
       }
     }
-    
+
     if (!eventData.eventStartTime) {
       errors.eventStartTime = "Start time is required";
     }
-    
+
+    if (!eventData.eventBudget) {
+      errors.eventBudget = "Event budget is required";
+    } else if (eventData.eventBudget < 0) {
+      errors.eventBudget = "Event budget cannot be negative";
+    }
+
     if (!eventData.eventFinishTime) {
       errors.eventFinishTime = "End time is required";
     } else if (
-      eventData.eventDate && 
-      eventData.eventStartTime && 
+      eventData.eventDate &&
+      eventData.eventStartTime &&
       eventData.eventFinishTime &&
-      `${eventData.eventDate}T${eventData.eventStartTime}` >= 
-      `${eventData.eventDate}T${eventData.eventFinishTime}`
+      `${eventData.eventDate}T${eventData.eventStartTime}` >=
+        `${eventData.eventDate}T${eventData.eventFinishTime}`
     ) {
       errors.eventFinishTime = "End time must be after start time";
     }
-    
+
     if (!eventData.timePeriod?.trim()) {
       errors.timePeriod = "Time period is required";
     }
-    
+
     if (!eventData.eventPresident?.trim()) {
       errors.eventPresident = "Event president is required";
     }
@@ -141,11 +242,13 @@ const UpdateEventForm = ({
     if (eventData.eventVenue && eventData.eventVenue.length > 100) {
       errors.eventVenue = "Venue must be less than 100 characters";
     }
-    
+
     // Only validate status change if user is staff advisor
-    if (userRole === "staffAdvisor" && 
-        eventData.eventStatus !== originalEventData.eventStatus &&
-        !["Pending", "Approved", "Rejected"].includes(eventData.eventStatus || "")) {
+    if (
+      userRole === "staffAdvisor" &&
+      eventData.eventStatus !== originalEventData.eventStatus &&
+      !["Pending", "Approved", "Rejected"].includes(eventData.eventStatus || "")
+    ) {
       errors.eventStatus = "Status must be Pending, Approved, or Rejected";
     }
 
@@ -154,16 +257,18 @@ const UpdateEventForm = ({
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
     const { name, value } = e.target;
     setEventData((prev) => ({ ...prev, [name]: value }));
-    
+
     // Clear specific validation error when field is updated
     if (validationErrors[name as keyof ValidationErrors]) {
-      setValidationErrors(prev => ({
+      setValidationErrors((prev) => ({
         ...prev,
-        [name]: undefined
+        [name]: undefined,
       }));
     }
   };
@@ -176,70 +281,81 @@ const UpdateEventForm = ({
     if (files && files.length > 0) {
       if (type === "proposal") {
         setProposalFile(files[0]);
-        setValidationErrors(prev => ({
+        setValidationErrors((prev) => ({
           ...prev,
-          eventProposal: undefined
+          eventProposal: undefined,
         }));
       } else {
         setFormFile(files[0]);
-        setValidationErrors(prev => ({
+        setValidationErrors((prev) => ({
           ...prev,
-          eventForm: undefined
+          eventForm: undefined,
         }));
       }
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate form before submission
     if (!validateForm()) {
       setError("Please fix the validation errors");
       return;
     }
-    
+
     if (!hasChanges) {
       setError("No changes detected");
       return;
     }
-    
+
     setIsSubmitting(true);
     setError("");
 
     try {
       let updatedEventData = { ...eventData };
-      
+
       // Handle file uploads if needed
       if (proposalFile || formFile) {
         setUploading(true);
         console.log("Uploading updated files...");
-        
+
         if (proposalFile) {
           const proposalPath = await uploadFile(proposalFile, "proposal");
           updatedEventData.eventProposal = proposalPath;
         }
-        
+
         if (formFile) {
           const formPath = await uploadFile(formFile, "form");
           updatedEventData.eventForm = formPath;
         }
-        
+
         setUploading(false);
       }
 
+      // Image URL is already in eventData from uploadEventImage callback
+
       await onUpdate(updatedEventData as IEvent);
+      toast.success("Event updated successfully!");
       setHasChanges(false);
       setAttemptedClose(false);
       onClose();
     } catch (error: any) {
       console.error("Error updating event:", error);
       setError(error.message || "Failed to update event");
+      toast.error(error.message || "Failed to update event");
     } finally {
       setIsSubmitting(false);
     }
   };
-
   const handleAttemptClose = () => {
     if (hasChanges) {
       setAttemptedClose(true);
@@ -256,7 +372,7 @@ const UpdateEventForm = ({
   const cancelClose = () => {
     setAttemptedClose(false);
   };
-  
+
   const renderFieldError = (fieldName: keyof ValidationErrors) => {
     return validationErrors[fieldName] ? (
       <p className="mt-1 text-xs text-red-500 flex items-center">
@@ -268,6 +384,18 @@ const UpdateEventForm = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         {/* Header with title and role indicator */}
         <div className="flex justify-between items-start mb-4">
@@ -276,16 +404,20 @@ const UpdateEventForm = ({
             Update Event
           </h2>
           {userRole && (
-            <span className={`px-3 py-1 text-sm rounded-full ${
-              userRole === "president" 
-                ? "bg-blue-100 text-blue-700" 
-                : "bg-green-100 text-green-700"
-            }`}>
-              {userRole === "president" ? "Organization President" : "Staff Advisor"}
+            <span
+              className={`px-3 py-1 text-sm rounded-full ${
+                userRole === "president"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-green-100 text-green-700"
+              }`}
+            >
+              {userRole === "president"
+                ? "Organization President"
+                : "Staff Advisor"}
             </span>
           )}
         </div>
-        
+
         {hasChanges && (
           <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-md flex items-center">
             <BsInfoCircle className="mr-2 flex-shrink-0" />
@@ -307,16 +439,19 @@ const UpdateEventForm = ({
               <MdWarning className="text-yellow-700 text-xl mr-2" />
               <h3 className="font-bold">Unsaved Changes</h3>
             </div>
-            <p className="mb-3">You have unsaved changes that will be lost if you close this form. What would you like to do?</p>
+            <p className="mb-3">
+              You have unsaved changes that will be lost if you close this form.
+              What would you like to do?
+            </p>
             <div className="flex justify-end space-x-2">
-              <Button 
-                text="Continue Editing" 
-                color="secondary" 
+              <Button
+                text="Continue Editing"
+                color="secondary"
                 onClick={cancelClose}
               />
-              <Button 
-                text="Discard Changes" 
-                color="danger" 
+              <Button
+                text="Discard Changes"
+                color="danger"
                 onClick={confirmClose}
               />
             </div>
@@ -456,7 +591,9 @@ const UpdateEventForm = ({
                   validationErrors.eventVenue ? "border-red-500" : ""
                 }`}
               />
-              <p className="mt-1 text-xs text-gray-500">Optional. Max 100 characters.</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Optional. Max 100 characters.
+              </p>
               {renderFieldError("eventVenue")}
             </div>
 
@@ -520,6 +657,96 @@ const UpdateEventForm = ({
                 {renderFieldError("eventStatus")}
               </div>
             )}
+
+            <div>
+              <label className="block text-sm font-medium mb-1 flex items-center">
+                <FiDollarSign className="mr-1 text-blue-600" />
+                Event Budget
+              </label>
+              <input
+                type="text"
+                name="eventBudget"
+                value={eventData.eventBudget || ""}
+                onChange={handleChange}
+                required
+                className={`w-full p-2 border rounded-md ${
+                  validationErrors.eventBudget ? "border-red-500" : ""
+                }`}
+              />
+              {renderFieldError("eventBudget")}
+            </div>
+          </div>
+
+          {/* Event Image Upload */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              <FiImage className="mr-1 text-blue-600" />
+              Event Banner Image
+            </label>
+            <div
+              className={`border-2 border-dashed rounded-lg p-4 ${
+                imageFileUploadingError
+                  ? "border-red-500"
+                  : fileUploadSuccess
+                  ? "border-green-500"
+                  : "border-gray-300"
+              }`}
+            >
+              {imagePreview ? (
+                <div className="mb-3">
+                  <img
+                    src={imagePreview}
+                    alt="Event preview"
+                    className="w-full max-h-48 object-cover rounded-md shadow-sm"
+                  />
+                </div>
+              ) : null}
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full text-sm text-gray-500 cursor-pointer file:mr-4 file:py-2 file:px-4
+        file:rounded-lg file:border-0 file:text-sm file:font-semibold
+        file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+
+              {imageFileUploadingProgress &&
+                imageFileUploadingProgress < 100 && (
+                  <div className="mt-2">
+                    <div className="flex justify-between text-xs text-gray-600 mb-1">
+                      <span>Upload progress</span>
+                      <span>{imageFileUploadingProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${imageFileUploadingProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+
+              {imageFileUploadingError && (
+                <p className="mt-2 text-xs text-red-500 flex items-center">
+                  <FiAlertCircle className="mr-1" />
+                  {imageFileUploadingError}
+                </p>
+              )}
+
+              {fileUploadSuccess && (
+                <p className="mt-2 text-xs text-green-600 flex items-center">
+                  <FiCheck className="mr-1" />
+                  Image uploaded successfully
+                </p>
+              )}
+
+              <p className="mt-2 text-xs text-gray-500">
+                {eventData.eventImage && !imageFile
+                  ? "Current image already uploaded. Upload a new image only if you want to replace it."
+                  : "Upload an event banner image (JPG, PNG). Recommended size: 1200x600px"}
+              </p>
+            </div>
           </div>
 
           {/* File uploads - Optional for updates */}
@@ -529,9 +756,11 @@ const UpdateEventForm = ({
                 <FiFileText className="mr-1 text-blue-600" />
                 Event Proposal (PDF) - Optional
               </label>
-              <div className={`border rounded-md ${
-                validationErrors.eventProposal ? "border-red-500" : ""
-              }`}>
+              <div
+                className={`border rounded-md ${
+                  validationErrors.eventProposal ? "border-red-500" : ""
+                }`}
+              >
                 <input
                   type="file"
                   accept=".pdf"
@@ -540,9 +769,9 @@ const UpdateEventForm = ({
                 />
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                {eventData.eventProposal ? 
-                  "Current file already uploaded. Upload a new file only if you want to replace it." : 
-                  "No file currently uploaded. Please upload a proposal PDF."}
+                {eventData.eventProposal
+                  ? "Current file already uploaded. Upload a new file only if you want to replace it."
+                  : "No file currently uploaded. Please upload a proposal PDF."}
               </p>
               {proposalFile && (
                 <p className="mt-1 text-sm text-green-600 flex items-center">
@@ -557,9 +786,11 @@ const UpdateEventForm = ({
                 <FiFileText className="mr-1 text-blue-600" />
                 Event Form (PDF) - Optional
               </label>
-              <div className={`border rounded-md ${
-                validationErrors.eventForm ? "border-red-500" : ""
-              }`}>
+              <div
+                className={`border rounded-md ${
+                  validationErrors.eventForm ? "border-red-500" : ""
+                }`}
+              >
                 <input
                   type="file"
                   accept=".pdf"
@@ -568,9 +799,9 @@ const UpdateEventForm = ({
                 />
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                {eventData.eventForm ? 
-                  "Current file already uploaded. Upload a new file only if you want to replace it." : 
-                  "No file currently uploaded. Please upload an event form PDF."}
+                {eventData.eventForm
+                  ? "Current file already uploaded. Upload a new file only if you want to replace it."
+                  : "No file currently uploaded. Please upload an event form PDF."}
               </p>
               {formFile && (
                 <p className="mt-1 text-sm text-green-600 flex items-center">

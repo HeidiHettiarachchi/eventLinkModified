@@ -27,16 +27,16 @@ const Footer: React.FC = () => {
                                     </svg>
                                 </a>
                                 <p className="text-justify">
-                                    Tailwindow is a collection of UI Components created using Tailwind CSS Framework. The UI Components gives you all of the building blocks you need to build any designs without any annoying opinionated styles you have to fight to override.
-                                </p>
+                                Stay connected with the latest events from our vibrant clubs and societies through EventLink.
+                                For more details, explore each club’s official website and reach out to us to stay informed and involved in every step.                                </p>
                             </div>
 
                             <div className="px-4 my-4 w-full sm:w-auto">
                                 <div>
-                                    <h2 className="inline-block text-2xl pb-4 mb-4 border-b-4  border-[#FC8239]">Company</h2>
+                                    <h2 className="inline-block text-2xl pb-4 mb-4 border-b-4  border-[#FC8239]">Website</h2>
                                 </div>
                                 <ul className="leading-8">
-                                    <li><a href="#" className="hover:text-[#FC8239]">About Us</a></li>
+                                    <li><a href="#AboutUs" className="hover:text-[#FC8239]">About Us</a></li>
                                     <li><a href="#" className="hover:text-[#FC8239]">Terms &amp; Conditions</a></li>
                                     <li><a href="#" className="hover:text-[#FC8239]">Privacy Policy</a></li>
                                     <li><a href="#" className="hover:text-[#FC8239]">Contact Us</a></li>
@@ -45,14 +45,14 @@ const Footer: React.FC = () => {
 
                             <div className="px-4 my-4 w-full sm:w-auto">
                                 <div>
-                                    <h2 className="inline-block text-2xl pb-4 mb-4 border-b-4 border-[#FC8239]">Blog</h2>
+                                    <h2 className="inline-block text-2xl pb-4 mb-4 border-b-4 border-[#FC8239]">Vist the clubs!</h2>
                                 </div>
                                 <ul className="leading-8">
-                                    <li><a href="#" className="hover:text-[#FC8239]">Getting Started With HTML and CSS</a></li>
-                                    <li><a href="#" className="hover:text-[#FC8239]">What Is Flex And When to Use It?</a></li>
-                                    <li><a href="#" className="hover:text-[#FC8239]">How TailwindCSS Can Help Your Productivity?</a></li>
-                                    <li><a href="#" className="hover:text-[#FC8239]">5 Tips to Make Responsive Website</a></li>
-                                    <li><a href="#" className="hover:text-[#FC8239]">See More</a></li>
+                                    <li><a href="https://www.rotary.org/en" className="hover:text-[#FC8239]">Rotary Club</a></li>
+                                    <li><a href="https://blog.sliitsesc.org/" className="hover:text-[#FC8239]">Software Engineering Student Community</a></li>
+                                    <li><a href="https://blog.aiesec.org/" className="hover:text-[#FC8239]">Aiesec</a></li>
+                                    <li><a href="https://www.toastmasters.org/membership/start-a-club/gavel-clubs" className="hover:text-[#FC8239]">Gavel Club</a></li>
+                                    <li><a href="https://www.computer.org/" className="hover:text-[#FC8239]">IEEE Computer Society</a></li>
                                 </ul>
                             </div>
                             <div className="px-4 my-4 w-full sm:w-auto xl:w-1/5">

@@ -16,12 +16,15 @@ import {
 import ManageUsers from "../../views/AdminUserManagementView";
 import ManageOrganizations from "../../views/ManageOrganizationsView";
 import CrewPage from "../../views/CrewView";
+import { ShieldAlertIcon } from "lucide-react";
+import logo from '/assets/logo.png';
 
 const navigation = [
   { name: "Dashboard", icon: HomeIcon, component: <ManageUsers /> },
   { name: "User Mangement", icon: UsersIcon, component: <ManageUsers /> },
   { name: "Organization Management", icon: CogIcon, component: <ManageOrganizations /> },
   { name: "Crew Management", icon: FolderIcon, component: <CrewPage /> },
+  { name: "Seller Management", icon: ShieldAlertIcon, component: <ManageUsers /> },
 ];
 
 function classNames(...classes: string[]) {
@@ -45,9 +48,9 @@ export default function Sidebar() {
         onClose={setSidebarOpen}
         className="relative z-50 lg:hidden"
       >
-        <DialogBackdrop className="fixed inset-0 bg-gray-900/80 transition-opacity" />
+        <DialogBackdrop className="fixed inset-0 bg-[#429cfa] transition-opacity" />
         <div className="fixed inset-0 flex">
-          <DialogPanel className="relative mr-16 flex w-full max-w-xs flex-1 bg-gray-900 transition-transform duration-300 ease-in-out">
+          <DialogPanel className="relative mr-16 flex w-full max-w-xs flex-1 bg-[#429cfa] transition-transform duration-300 ease-in-out">
             <TransitionChild>
               <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
                 <button
@@ -102,14 +105,13 @@ export default function Sidebar() {
       </Dialog>
 
       {/* Static Sidebar for Desktop */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col bg-gray-900">
+      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col bg-[#429cfa]">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto px-6">
           <div className="flex h-16 shrink-0 items-center">
-            {/* <img
-              alt="Your Company"
-              src="https://tailwindui.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
-              className="h-8 w-auto"
-            /> */}
+          <div className="flex items-center space-x-3">
+                        <img src={logo} alt="Logo" className="h-10 w-auto" />
+                        <span className="text-white text-xl font-semibold">Dashboard</span>
+                    </div>
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -121,8 +123,8 @@ export default function Sidebar() {
                         onClick={() => setSelectedTab(item.name)}
                         className={classNames(
                           item.name === selectedTab
-                            ? "bg-gray-800 text-white"
-                            : "text-gray-400 hover:bg-gray-800 hover:text-white",
+                            ? " text-blue-800"
+                            : "text-gray-900 hover:bg-blue-800 hover:text-white",
                           "group flex gap-x-3 rounded-md p-2 text-sm font-semibold"
                         )}
                       >
@@ -145,7 +147,7 @@ export default function Sidebar() {
       <div className="flex-1 lg:ml-72 p-6">{selectedTabComponent}</div>
 
       {/* Top Navigation for Mobile */}
-      <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-gray-900 px-4 py-4 shadow-sm lg:hidden">
+      <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-[#429cfa] px-4 py-4 shadow-sm lg:hidden">
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}

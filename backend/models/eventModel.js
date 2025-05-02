@@ -45,7 +45,7 @@ const eventRegSchema = new Schema({
 
     eventProposal: {
         type: String,
-        required: true
+        required: false
     },
 
     eventForm: {
@@ -74,7 +74,15 @@ const eventRegSchema = new Schema({
         enum: ['Pending', 'Approved', 'Rejected'],
         default: 'Pending',
         required: true
-    }
+    }, 
+    eventBudget: {
+        type: Number, 
+        required: true
+    },
+    eventImage: {
+        type: String, 
+        required: false
+    },
 }, { timestamps: true });
 
 const eventRegForm = mongoose.model('eventRegForm', eventRegSchema);

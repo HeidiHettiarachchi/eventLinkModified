@@ -5,7 +5,7 @@ const validator = require("validator");
 
 const register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role } = req.body;
 
     if (!username || !email || !password) {
       throw Error("Username, email and password are required");
@@ -19,9 +19,10 @@ const register = async (req, res) => {
     if (!validator.isStrongPassword(password)) {
       throw Error("Please provide a strong password");
     }
+  
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, email, password: hashedPassword });
+    const user = new User({ username, email, password: hashedPassword,role});
     await user.save();
 
     const token = jwt.sign(

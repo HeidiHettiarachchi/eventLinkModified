@@ -38,8 +38,8 @@ export const userSignup = createAsyncThunk<
   ISignupResponse,
   ISignupRequest,
   { rejectValue: IErrorResponse }
->("user/signup", async ({ email, password, username }, { rejectWithValue }) => {
-  const response = await signupAPI({ email, password, username });
+>("user/signup", async ({ email, password, username, role }, { rejectWithValue }) => {
+  const response = await signupAPI({ email, password, username ,role });
 
   if (response.status === 200) {
     return response.data;

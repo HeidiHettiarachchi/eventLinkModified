@@ -25,6 +25,8 @@ const createEvent = async (req, res) => {
     eventMode,
     eventType,
     eventVenue,
+    eventBudget,
+    eventImage
   } = req.body;
 
   // Validate organization ID
@@ -46,6 +48,10 @@ const createEvent = async (req, res) => {
     return res.status(400).json({
       message: "Event date, start time, and finish time are required",
     });
+  }
+
+  if (!eventBudget){
+    return res.status(400).json({ message: "Event budget is required" });
   }
 
   // Validate that event date is not in the past
@@ -134,6 +140,8 @@ const createEvent = async (req, res) => {
       eventType,
       eventVenue,
       eventStatus: "Pending", // Always start with pending status
+      eventBudget,
+      eventImage,
     });
 
     await eventCreate.save({ session });
@@ -181,6 +189,17 @@ const getEvents = async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to fetch events", error: err.message });
+  }
+};
+
+
+// Fetch all approved events for calendar 
+const getApprovedEvents = async (req, res) => {
+  try {
+    const approvedEvents = await eventRegForm.find({ eventStatus: 'Approved' }).populate("organizationId");
+    res.status(200).json(approvedEvents);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch approved events", error: err.message });
   }
 };
 
@@ -308,6 +327,10 @@ const updateEvent = async (req, res) => {
   // Remove oldOrganizationId from data to be updated
   if (updatedData.oldOrganizationId) {
     delete updatedData.oldOrganizationId;
+  }
+
+  if(updatedData.eventImage && updatedData.eventImage.length > 500){
+    return res.status(400).json({ message: "Event image URL is too long" });
   }
 
   // Start a session for transaction
@@ -660,4 +683,5 @@ module.exports = {
   updateEvent,
   deleteEvent,
   getEventsById,
+  getApprovedEvents,
 };

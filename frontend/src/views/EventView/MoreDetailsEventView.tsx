@@ -22,9 +22,10 @@ import {
   MdPictureAsPdf,
   MdOpenInNew,
   MdDownload,
-  MdClose
+  MdClose,
+  MdImage
 } from "react-icons/md";
-import { FiFileText } from "react-icons/fi";
+import { FiFileText, FiImage } from "react-icons/fi";
 
 const EventDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +34,7 @@ const EventDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPdfViewer, setShowPdfViewer] = useState<boolean>(false);
   const [proposalUrl, setProposalUrl] = useState<string>("");
+  const [formUrl, setFormUrl] = useState<string>("");
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -47,6 +49,11 @@ const EventDetail: React.FC = () => {
           // Get the proposal URL using the getFileUrl function
           if (eventData.eventProposal) {
             setProposalUrl(getFileUrl(eventData.eventProposal));
+          }
+          
+          // Get form URL if it exists
+          if (eventData.eventForm) {
+            setFormUrl(getFileUrl(eventData.eventForm));
           }
         } else {
           setError("Event not found or not approved.");
@@ -65,6 +72,17 @@ const EventDetail: React.FC = () => {
   // Function to handle closing the PDF viewer modal
   const closePdfViewer = () => {
     setShowPdfViewer(false);
+  };
+
+  // Format date for better display
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
   return (
@@ -159,10 +177,10 @@ const EventDetail: React.FC = () => {
           </div>
         ) : event ? (
           <div className="bg-white rounded-xl shadow-xl overflow-hidden mb-10 transition-all duration-300 hover:shadow-2xl">
-            {/* Event Header with better image handling */}
+            {/* Event Header with event image support */}
             <div className="h-72 md:h-80 bg-gradient-to-r from-blue-600 to-purple-700 relative">
               <img 
-                src="/images/default-event.jpg" 
+                src={event.eventImage || "/images/default-event.jpg"} 
                 alt={event.eventName} 
                 className="w-full h-full object-cover opacity-90 transition-opacity duration-300"
                 onError={(e) => {
@@ -171,6 +189,15 @@ const EventDetail: React.FC = () => {
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+              
+              {/* Event Image Badge */}
+              {event.eventImage && (
+                <div className="absolute top-0 left-0 bg-black/50 text-white text-xs font-medium px-3 py-1 m-4 rounded-full flex items-center">
+                  <FiImage className="mr-1" />
+                  Official Event Banner
+                </div>
+              )}
+              
               <div className="absolute top-0 right-0 bg-green-500 text-white font-bold px-4 py-2 m-4 rounded-lg shadow-md">
                 Approved
               </div>
@@ -198,7 +225,7 @@ const EventDetail: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-gray-500">Date</h3>
-                      <p className="text-gray-800 font-semibold">{event.eventDate}</p>
+                      <p className="text-gray-800 font-semibold">{formatDate(event.eventDate)}</p>
                     </div>
                   </div>
                   
@@ -304,6 +331,50 @@ const EventDetail: React.FC = () => {
                         </button>
                         <a 
                           href={proposalUrl} 
+                          download
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="px-3 py-2 bg-gray-600 text-white text-sm font-medium rounded hover:bg-gray-700 transition-colors flex items-center"
+                        >
+                          <MdDownload className="mr-1" />
+                          Download
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Document Section for Event Form/Budget */}
+              {formUrl && (
+                <div className="mb-8">
+                  <h3 className="font-bold text-lg mb-3 text-blue-700 flex items-center">
+                    <FiFileText className="mr-2" />
+                    Event Budget
+                  </h3>
+                  <div className="p-5 bg-gray-50 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="p-3 bg-green-100 rounded-full mr-4 flex-shrink-0">
+                          <MdPictureAsPdf className="text-green-600 text-xl" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-800">Event Budget Document</h4>
+                          <p className="text-gray-500 text-sm">View the event budget details</p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <a 
+                          href={formUrl}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors flex items-center"
+                        >
+                          <MdOpenInNew className="mr-1" />
+                          View
+                        </a>
+                        <a 
+                          href={formUrl} 
                           download
                           target="_blank" 
                           rel="noopener noreferrer"
